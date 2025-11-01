@@ -177,7 +177,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: "_build/html"
-        key: html-build-${{ matrix.branch }}-${{ hashFiles('**', 'requirements.txt', 'EXTRA_CACHE_VARS.txt') }}
+        key: html-build-${{ matrix.branch }}-${{ hashFiles('**/*', 'requirements.txt', 'EXTRA_CACHE_VARS.txt') }}
     
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
       name: Set up Python 3.11
