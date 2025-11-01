@@ -2,6 +2,7 @@ name: deploy-book
 
 # Based on:
 # https://jupyterbook.org/en/stable/publish/gh-pages.html
+# https://github.com/TeachBooks/deploy-book-workflow/blob/main/.github/workflows/deploy-book.yml
 
 on:
   workflow_call:
