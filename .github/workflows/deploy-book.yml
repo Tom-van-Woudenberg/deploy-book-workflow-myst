@@ -152,7 +152,7 @@ jobs:
     - name: Record extra cache info
       run: |
         # Record filenames listing -- this updates the cache on filename change
-        find book/ -type f >> EXTRA_CACHE_VARS.txt
+        find ./ -type f >> EXTRA_CACHE_VARS.txt
         # Record if branch is preprocessed
         if [ "$BRANCHES_TO_PREPROCESS" == "*" ] || echo "$BRANCHES_TO_PREPROCESS" | tr ' ' '\n' | grep "^${{ matrix.branch }}$"; then
           echo true >> EXTRA_CACHE_VARS.txt
