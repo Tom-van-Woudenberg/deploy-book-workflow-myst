@@ -61,7 +61,7 @@ env:
   # Note: does not support '*'
   BRANCHES_ARCHIVED: ${{ vars.BRANCHES_ARCHIVED }}
 
-  BASE_URL: ${{ github.event.repository.name }}
+  BASE_URL: /${{ github.event.repository.name }}
 
 
 jobs:
