@@ -173,65 +173,30 @@ jobs:
       id: cache-html
       uses: actions/cache@v4
       with:
-        path: "book/_build/html"
-        key: html-build-${{ matrix.branch }}-${{ hashFiles('book/**', 'requirements.txt', 'EXTRA_CACHE_VARS.txt') }}
-
-    - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
-      name: Set up Python 3.11
-      uses: actions/setup-python@v5
-      id: setup-python
-      with:
-        python-version: 3.11
+        path: ./_build/html"
+        key: html-build-${{ matrix.branch }}-${{ hashFiles('./**', 'requirements.txt', 'EXTRA_CACHE_VARS.txt') }}
 
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
       name: Record current date for cache
       run: |
         echo "WEEK=$(date +%V)" >> $GITHUB_ENV
 
-    # If a build is required, load the cached venv, if available
-    # A cached environment is loaded if the requirements.txt file is unchanged, as this is checked by the file hash.
-    # A new cache is created if the old one is more than a week old, as the week number is included in the file hash.
-    # Note: an id is not required here because no check for the cached environment is needed; this is because a new environment
-    #  is only required if a build is required and this is already checked with id: cache-html, as described above.
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
-      name: Cache virtualenv
-      uses: actions/cache@v4
+      uses: actions/configure-pages@v3
+
+    - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
+      name: Setup Node
+      uses: actions/setup-node@v4
       with:
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}-week${{ env.WEEK }}-${{ github.repository }}
-        path: .venv
-
-    # Dependencies are always checked if a build is required, regardless of whether a cached environment is used
-    # Either cache situation addressed with: python -m venv .venv
-    #  - If a cached environment was loaded, .venv will be reused;
-    #  - If not loaded, a new venv is created
-    # Note that for an existing cached venv when using: pip install -r requirements.txt
-    #  - Packages will be checked for compatability and updated if a new package was added to requirements.txt
-    #  - If no new packages are added, or the new package is compatible with the other packages,
-    #      UPDATES TO EXISTING PACKAGES WILL NOT BE MADE AUTOMATICALLY, EVEN IF A NEW VERSION EXISTS
-    #  - The significance of the last point is that, when compared to the venv on a newer branch, a 
-    #      frequently used branch (where the cache has not expired) may retain old and out of date packages.
-    #      Since the week number is included in the cache hash, this will be 1 week max.
-    #  - Recommendation is to specifically pin version numbers and update automatically with Dependabot.
-    - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
-      name: Install dependencies
-      run: |
-        python -m venv .venv
-        source .venv/bin/activate
-        python -m pip install -r requirements.txt
-        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
-        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+        node-version: 18.x
 
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
-      name: Insert banner if archived
-      run: |
-        if echo "$BRANCHES_ARCHIVED" | tr ' ' '\n' | grep "^${{ matrix.branch }}$"; then
-          {
-            url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.html_url')
-            echo 'html:'
-            echo "  announcement: 'You are viewing an archived version of the book. Click <a href=\"$url$PRIMARY_BRANCH\">here</a> for the latest version.'"
-          } >> book/_config.yml
-          cat book/_config.yml
-        fi
+      name: Setup typst
+      uses: typst-community/setup-typst@v4
+
+    - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
+      name: Install MyST Markdown with npm
+      run: npm install -g mystmd
 
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
       name: Preprocess & build the book from branch
@@ -243,7 +208,7 @@ jobs:
         fi
         set -o pipefail
         # https://stackoverflow.com/a/692407
-        teachbooks build $option_release book/ > >(tee stdout.log) 2> >(tee stderr.log >&2)
+        myst build --html > >(tee stdout.log) 2> >(tee stderr.log >&2)
         set +o pipefail
 
     - name: If failed, restore a book for this branch from cache
@@ -252,7 +217,7 @@ jobs:
       uses: actions/cache/restore@v4
       with:
         key: none
-        path: "book/_build/html"
+        path: "_build/html"
         restore-keys: html-build-${{ matrix.branch }}
 
     - name: Debug cache attempt output
@@ -317,7 +282,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.MATRIX_BRANCH_NAME_CLEAN }}
-        path: "book/_build/html"
+        path: "./_build/html"
 
   deploy-books:
     # Run after build-books, even if it failed
