@@ -239,7 +239,9 @@ jobs:
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
       name: Build PDF
       run: |
-        myst build --pdf
+        set -o pipefail
+        myst build --pdf > >(tee -a stdout.log) 2> >(tee -a stderr.log >&2)
+        set +o pipefail
     
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
       name: Preprocess & build the book from branch
@@ -251,7 +253,7 @@ jobs:
         fi
         set -o pipefail
         # https://stackoverflow.com/a/692407
-        myst build --execute --html > >(tee stdout.log) 2> >(tee stderr.log >&2)
+        myst build --execute --html > >(tee -a stdout.log) 2> >(tee -a stderr.log >&2)
         set +o pipefail
 
     - name: If failed, restore a book for this branch from cache
