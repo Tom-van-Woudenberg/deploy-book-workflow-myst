@@ -237,6 +237,11 @@ jobs:
       run: npm install -g mystmd
 
     - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
+      name: Build PDF
+      run: |
+        myst build --pdf
+    
+    - if: ${{ steps.cache-html.outputs.cache-hit != 'true' }}
       name: Preprocess & build the book from branch
       run: |
         if [ "$BRANCHES_TO_PREPROCESS" == "*" ] || echo "$BRANCHES_TO_PREPROCESS" | tr ' ' '\n' | grep "^${{ matrix.branch }}$"; then
